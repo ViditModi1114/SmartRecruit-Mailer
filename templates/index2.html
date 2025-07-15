@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMARTRECRUIT MAILER</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .step {
+            display: none;
+            margin-bottom: 20px;
+        }
+        .step.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #emailOutput {
+            white-space: pre-wrap;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            min-height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SMARTRECRUIT MAILER</h1>
+
+        <div id="step1" class="step active">
+            <h2>Step 1: Company Information</h2>
+            <div class="form-group">
+                <label for="company_name">Company Name:</label>
+                <input type="text" id="company_name" name="company_name" placeholder="Enter company name" required>
+            </div>
+            <button onclick="nextStep(1)">Next</button>
+        </div>
+
+        <div id="step2" class="step">
+            <h2>Step 2: Job Description</h2>
+            <div class="form-group">
+                <label for="job_description">Job Description (comma-separated skills):</label>
+                <textarea id="job_description" name="job_description" rows="5" placeholder="e.g., Python, JavaScript, Project Management" required></textarea>
+            </div>
+            <button onclick="prevStep(2)">Back</button>
+            <button onclick="nextStep(2)">Next</button>
+        </div>
+
+        <div id="step3" class="step">
+            <h2>Step 3: Your Information</h2>
+            <div class="form-group">
+                <label for="your_name">Your Name:</label>
+                <input type="text" id="your_name" name="your_name" placeholder="Enter your name" required>
+            </div>
+            <div class="form-group">
+                <label for="your_position">Your Position:</label>
+                <input type="text" id="your_position" name="your_position" placeholder="Enter your position" required>
+            </div>
+            <div class="form-group">
+                <label for="your_contact">Your Contact Information:</label>
+                <input type="text" id="your_contact" name="your_contact" placeholder="Enter your contact information" required>
+            </div>
+            <button onclick="prevStep(3)">Back</button>
+            <button onclick="generateEmail()">Generate Email</button>
+        </div>
+
+        <div id="step4" class="step">
+            <h2>Generated Email</h2>
+            <div id="emailOutput"></div>
+            <button onclick="prevStep(4)">Back</button>
+            <button onclick="sendToMail()">Send to Mail</button>
+        </div>
+    </div>
+
+    <script>
+        function nextStep(currentStep) {
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.getElementById(`step${currentStep + 1}`).classList.add('active');
+        }
+
+        function prevStep(currentStep) {
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.getElementById(`step${currentStep - 1}`).classList.add('active');
+        }
+
+        async function generateEmail() {
+            const companyName = document.getElementById('company_name').value;
+            const jobDescription = document.getElementById('job_description').value;
+            const yourName = document.getElementById('your_name').value;
+            const yourPosition = document.getElementById('your_position').value;
+            const yourContact = document.getElementById('your_contact').value;
+
+            if (!companyName || !jobDescription || !yourName || !yourPosition || !yourContact) {
+                alert('Please fill in all fields before generating the email.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        company_name: companyName,
+                        job_description: jobDescription,
+                        your_name: yourName,
+                        your_position: yourPosition,
+                        your_contact: yourContact
+                    })
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    document.getElementById('emailOutput').innerText = data.error;
+                } else {
+                    document.getElementById('emailOutput').innerText = data.email_content;
+                    document.getElementById('step3').classList.remove('active');
+                    document.getElementById('step4').classList.add('active');
+                }
+            } catch (error) {
+                document.getElementById('emailOutput').innerText = 'An error occurred while generating the email.';
+            }
+        }
+
+        function sendToMail() {
+            const emailContent = document.getElementById('emailOutput').innerText;
+            window.location.href = `mailto:?subject=Providing Skilled Employees for Your Job Opening&body=${encodeURIComponent(emailContent)}`;
+        }
+    </script>
+</body>
+</html>
